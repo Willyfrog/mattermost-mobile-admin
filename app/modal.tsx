@@ -1,35 +1,115 @@
 import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function ModalScreen() {
+export default function SettingsModal() {
+  const { serverUrl, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Modal</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/modal.tsx" />
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.content}>
+        <Text style={styles.title}>Settings</Text>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Server Information</Text>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Server URL:</Text>
+            <Text style={styles.value}>{serverUrl || 'Not connected'}</Text>
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Actions</Text>
+          <Text 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            Logout
+          </Text>
+        </View>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.aboutText}>
+            Mattermost Mobile Admin v1.0.0
+          </Text>
+          <Text style={styles.aboutText}>
+            Manage your Mattermost server from anywhere.
+          </Text>
+        </View>
+      </ScrollView>
 
-      {/* Use a light status bar on iOS to account for the black space above the modal */}
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
+    color: '#333',
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 15,
+    color: '#333',
+  },
+  infoContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 5,
+  },
+  value: {
+    fontSize: 16,
+    color: '#333',
+  },
+  logoutButton: {
+    backgroundColor: '#ff4444',
+    color: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    overflow: 'hidden',
+  },
+  aboutText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    textAlign: 'center',
   },
 });
