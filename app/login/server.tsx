@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FontAwesome } from '@expo/vector-icons';
 
 import { Text, View } from '@/components/Themed';
 import { validateServerUrl } from '@/utils/validation';
@@ -44,6 +45,15 @@ export default function ServerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Pressable
+          style={styles.settingsButton}
+          onPress={() => router.push('/modal')}
+        >
+          <FontAwesome name="cog" size={24} color="#666" />
+        </Pressable>
+      </View>
+      
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -94,6 +104,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 20,
+    paddingBottom: 0,
+  },
+  settingsButton: {
+    padding: 10,
   },
   keyboardView: {
     flex: 1,

@@ -1,15 +1,20 @@
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { Text, View } from '@/components/Themed';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function SettingsModal() {
-  const { serverUrl, logout } = useAuth();
+  const { isAuthenticated, serverUrl, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleConnect = () => {
+    router.push('/login/server');
   };
 
   return (
@@ -23,16 +28,31 @@ export default function SettingsModal() {
             <Text style={styles.label}>Server URL:</Text>
             <Text style={styles.value}>{serverUrl || 'Not connected'}</Text>
           </View>
+          <View style={[styles.infoContainer, { marginTop: 10 }]}>
+            <Text style={styles.label}>Status:</Text>
+            <Text style={[styles.value, isAuthenticated ? styles.statusConnected : styles.statusDisconnected]}>
+              {isAuthenticated ? 'Connected' : 'Disconnected'}
+            </Text>
+          </View>
         </View>
         
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions</Text>
-          <Text 
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            Logout
-          </Text>
+          {isAuthenticated ? (
+            <Text 
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              Logout
+            </Text>
+          ) : (
+            <Text 
+              style={styles.connectButton}
+              onPress={handleConnect}
+            >
+              Connect to Server
+            </Text>
+          )}
         </View>
         
         <View style={styles.section}>
@@ -96,8 +116,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  statusConnected: {
+    color: '#4CAF50',
+    fontWeight: '600',
+  },
+  statusDisconnected: {
+    color: '#ff4444',
+    fontWeight: '600',
+  },
   logoutButton: {
     backgroundColor: '#ff4444',
+    color: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    overflow: 'hidden',
+  },
+  connectButton: {
+    backgroundColor: '#007AFF',
     color: '#fff',
     padding: 15,
     borderRadius: 8,

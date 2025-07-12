@@ -17,11 +17,6 @@ export default function DashboardScreen() {
           <Text style={styles.value}>{serverUrl || 'Not connected'}</Text>
         </View>
         
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>Status:</Text>
-          <Text style={[styles.value, styles.statusConnected]}>Connected</Text>
-        </View>
-        
         <View style={styles.welcomeContainer}>
           <Text style={styles.welcomeText}>
             Welcome to the Mattermost Mobile Admin app. Use the tabs below to manage your server.
