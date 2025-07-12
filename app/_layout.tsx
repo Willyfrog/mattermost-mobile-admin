@@ -1,7 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -19,7 +19,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: 'dashboard',
+  initialRouteName: 'index',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -56,9 +56,13 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { isAuthenticated, loading } = useAuth();
+  const pathname = usePathname();
+
+  console.log('🚀 RootLayoutNav render - isAuthenticated:', isAuthenticated, 'loading:', loading, 'pathname:', pathname);
 
   // Show loading screen while checking authentication
   if (loading) {
+    console.log('🚀 Showing loading screen');
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -66,20 +70,19 @@ function RootLayoutNav() {
     );
   }
 
+  console.log('🚀 Rendering Stack with screens for authenticated:', isAuthenticated);
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        {!isAuthenticated ? (
-          <>
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="dashboard" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </>
-        )}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        {!isAuthenticated ? [
+          <Stack.Screen key="login" name="login" options={{ headerShown: false }} />,
+          <Stack.Screen key="modal" name="modal" options={{ presentation: 'modal' }} />
+        ] : [
+          <Stack.Screen key="dashboard" name="dashboard" options={{ headerShown: false }} />,
+          <Stack.Screen key="modal-auth" name="modal" options={{ presentation: 'modal' }} />
+        ]}
       </Stack>
     </ThemeProvider>
   );

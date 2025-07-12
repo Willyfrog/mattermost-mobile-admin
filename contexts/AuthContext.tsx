@@ -18,25 +18,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log('🔧 AuthProvider render - isAuthenticated:', isAuthenticated, 'loading:', loading);
+
   useEffect(() => {
     // Check if user is already authenticated
     checkAuthStatus();
   }, []);
 
   const checkAuthStatus = async () => {
+    console.log('🔧 Checking auth status...');
     try {
       const token = mattermostService.getToken();
       const url = mattermostService.getUrl();
+      console.log('🔧 Auth check - token:', !!token, 'url:', url);
       
       if (token && url) {
-        // Could verify token validity here
+        console.log('🔧 Setting authenticated to true');
         setIsAuthenticated(true);
         setServerUrl(url);
-        // Note: In a real app, you'd want to fetch user data here
+      } else {
+        console.log('🔧 No token/url found, staying unauthenticated');
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('❌ Error checking auth status:', error);
     } finally {
+      console.log('🔧 Setting loading to false');
       setLoading(false);
     }
   };

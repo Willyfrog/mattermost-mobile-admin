@@ -11,7 +11,9 @@ This is a React Native mobile application built with Expo and TypeScript, design
 The app follows a standard Expo Router architecture:
 
 - **app/**: Contains the main application screens using file-based routing
+  - `index.tsx`: Root route handler that redirects based on authentication state
   - `login/`: Authentication flow (server URL, credentials, success screens)
+    - `index.tsx`: Redirects to server setup screen
   - `dashboard/`: Tab-based navigation group with index and two screens
   - `_layout.tsx`: Root layout handling fonts, themes, navigation stack, and auth provider
   - `modal.tsx`: Modal screen accessible from any tab
@@ -57,18 +59,23 @@ npm test         # Run Jest tests with watch mode
 
 ## Navigation Structure
 
-The app uses a stack navigator with:
-- Root level: Stack with login flow, tabs, and modal
-- Login flow: Server URL → Credentials → Success screens
-- Tabs level: Two tabs (index and two screens)
-- Modal: Presented modally from any screen
+The app uses a stack navigator with conditional routing based on authentication:
+- **Root level**: Stack with index route, login flow, dashboard tabs, and modal
+- **Index route** (`/`): Automatically redirects to `/login` or `/dashboard` based on auth state
+- **Login flow**: `/login` → `/login/server` → `/login/credentials` → `/login/success`
+- **Dashboard tabs**: Two tabs (index and two screens) after authentication
+- **Modal**: Presented modally from any screen
 
 ## Authentication Flow
 
-1. **Server URL Screen** (`/login/server`): User enters Mattermost server URL
-2. **Credentials Screen** (`/login/credentials`): User enters username/password
-3. **Success Screen** (`/login/success`): Shows successful connection
-4. **Main App** (`/dashboard`): Tab-based navigation after authentication
+1. **App Start** (`/`): Root index checks authentication and redirects appropriately
+2. **Login Start** (`/login`): Redirects to server setup screen
+3. **Server URL Screen** (`/login/server`): User enters Mattermost server URL
+4. **Credentials Screen** (`/login/credentials`): User enters username/password  
+5. **Success Screen** (`/login/success`): Shows successful connection
+6. **Main App** (`/dashboard`): Tab-based navigation after authentication
+
+The app automatically handles navigation based on authentication state, ensuring users always land on the appropriate screen.
 
 ## Mattermost Integration
 
