@@ -14,7 +14,7 @@ export default function SuccessScreen() {
 
   const handleContinue = () => {
     // Navigate to main app - for now we'll go back to tabs
-    router.replace('/(tabs)');
+    router.replace('/dashboard');
   };
 
   return (

@@ -12,7 +12,7 @@ The app follows a standard Expo Router architecture:
 
 - **app/**: Contains the main application screens using file-based routing
   - `login/`: Authentication flow (server URL, credentials, success screens)
-  - `(tabs)/`: Tab-based navigation group with index and two screens
+  - `dashboard/`: Tab-based navigation group with index and two screens
   - `_layout.tsx`: Root layout handling fonts, themes, navigation stack, and auth provider
   - `modal.tsx`: Modal screen accessible from any tab
 - **components/**: Reusable UI components with theming support
@@ -68,7 +68,7 @@ The app uses a stack navigator with:
 1. **Server URL Screen** (`/login/server`): User enters Mattermost server URL
 2. **Credentials Screen** (`/login/credentials`): User enters username/password
 3. **Success Screen** (`/login/success`): Shows successful connection
-4. **Main App** (`/(tabs)`): Tab-based navigation after authentication
+4. **Main App** (`/dashboard`): Tab-based navigation after authentication
 
 ## Mattermost Integration
 
