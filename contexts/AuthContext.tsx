@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { mattermostService } from '@/services/mattermostClient';
+import { TokenStorage } from '@/services/tokenStorage';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any | null;
   serverUrl: string | null;
   login: (serverUrl: string, username: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -28,16 +29,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkAuthStatus = async () => {
     console.log('🔧 Checking auth status...');
     try {
-      const token = mattermostService.getToken();
-      const url = mattermostService.getUrl();
-      console.log('🔧 Auth check - token:', !!token, 'url:', url);
+      // Initialize the Mattermost client to load stored tokens
+      await mattermostService.initialize();
       
-      if (token && url) {
+      // Get authentication data from secure storage
+      const authData = await TokenStorage.getAuthData();
+      console.log('🔧 Auth check - authData:', !!authData);
+      
+      if (authData) {
         console.log('🔧 Setting authenticated to true');
         setIsAuthenticated(true);
-        setServerUrl(url);
+        setServerUrl(authData.serverUrl);
+        
+        // Set user data if available
+        if (authData.userId && authData.username) {
+          setUser({
+            id: authData.userId,
+            username: authData.username,
+          });
+        }
       } else {
-        console.log('🔧 No token/url found, staying unauthenticated');
+        console.log('🔧 No auth data found, staying unauthenticated');
       }
     } catch (error) {
       console.error('❌ Error checking auth status:', error);
@@ -64,12 +76,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    setServerUrl(null);
-    // Clear token from service
-    mattermostService.setToken('');
+  const logout = async () => {
+    try {
+      // Clear all authentication data from secure storage and service
+      await mattermostService.logout();
+      
+      // Update local state
+      setIsAuthenticated(false);
+      setUser(null);
+      setServerUrl(null);
+    } catch (error) {
+      console.error('❌ Error during logout:', error);
+      // Still update local state even if storage clear fails
+      setIsAuthenticated(false);
+      setUser(null);
+      setServerUrl(null);
+    }
   };
 
   return (

@@ -1,11 +1,29 @@
 import { Client4 } from '@mattermost/client';
 import { normalizeServerUrl } from '@/utils/validation';
+import { TokenStorage } from './tokenStorage';
 
 export class MattermostService {
   private client: Client4;
+  private initialized = false;
   
   constructor() {
     this.client = new Client4();
+  }
+
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    
+    try {
+      const authData = await TokenStorage.getAuthData();
+      if (authData) {
+        this.client.setUrl(authData.serverUrl);
+        this.client.setToken(authData.token);
+      }
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to initialize Mattermost client:', error);
+      this.initialized = true;
+    }
   }
 
   async pingServer(serverUrl: string): Promise<{ success: boolean; error?: string }> {
@@ -14,7 +32,7 @@ export class MattermostService {
       this.client.setUrl(normalizedUrl);
       
       // Use the ping endpoint to check if server is reachable
-      await this.client.ping();
+      await this.client.ping(false);
       
       return { success: true };
     } catch (error) {
@@ -43,6 +61,17 @@ export class MattermostService {
       
       const user = await this.client.login(username, password);
       
+      // Save authentication data to secure storage
+      const token = this.client.getToken();
+      if (token) {
+        await TokenStorage.saveAuthData({
+          token,
+          serverUrl: normalizedUrl,
+          userId: user.id,
+          username: user.username,
+        });
+      }
+      
       return { success: true, user };
     } catch (error) {
       console.error('Login failed:', error);
@@ -68,6 +97,16 @@ export class MattermostService {
     }
   }
 
+  async logout(): Promise<void> {
+    try {
+      await TokenStorage.clearAll();
+      this.client.setToken('');
+      this.client.setUrl('');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    }
+  }
+
   getToken(): string | null {
     return this.client.getToken();
   }
@@ -78,6 +117,32 @@ export class MattermostService {
 
   getUrl(): string {
     return this.client.getUrl();
+  }
+
+  async isAuthenticated(): Promise<boolean> {
+    await this.initialize();
+    const token = this.client.getToken();
+    return Boolean(token);
+  }
+
+  async validateToken(): Promise<boolean> {
+    try {
+      await this.initialize();
+      const token = this.client.getToken();
+      
+      if (!token) {
+        return false;
+      }
+
+      // Validate token by making a simple API call
+      await this.client.getMe();
+      return true;
+    } catch (error) {
+      console.error('Token validation failed');
+      // Clear invalid token from storage
+      await this.logout();
+      return false;
+    }
   }
 }
 
