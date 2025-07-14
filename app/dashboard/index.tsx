@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   
   // Welcome Section
   welcomeSection: {
-    marginBottom: 20,
+    marginBottom: 40,
   },
   welcomeCard: {
     borderRadius: 16,

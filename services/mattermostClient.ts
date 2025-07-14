@@ -146,6 +146,97 @@ export class MattermostService {
       return false;
     }
   }
+
+  async searchUsers(
+    term: string = '',
+    options: {
+      allow_inactive?: boolean;
+      limit?: number;
+      page?: number;
+    } = {}
+  ): Promise<{ success: boolean; users?: any[]; error?: string }> {
+    try {
+      await this.initialize();
+      
+      const searchOptions = {
+        term,
+        allow_inactive: options.allow_inactive || false,
+        limit: Math.min(options.limit || 20, 100), // Max 100 as per API
+        page: options.page || 0,
+      };
+
+      const users = await this.client.searchUsers(term, searchOptions);
+      
+      return { success: true, users };
+    } catch (error) {
+      console.error('User search failed:', error);
+      
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: 'Failed to search users' };
+    }
+  }
+
+  async getAllUsers(
+    page: number = 0,
+    perPage: number = 20
+  ): Promise<{ success: boolean; users?: any[]; error?: string }> {
+    try {
+      await this.initialize();
+      
+      const users = await this.client.getProfiles(page, Math.min(perPage, 100));
+      
+      return { success: true, users };
+    } catch (error) {
+      console.error('Get users failed:', error);
+      
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: 'Failed to get users' };
+    }
+  }
+
+  async getUsersByIds(
+    userIds: string[]
+  ): Promise<{ success: boolean; users?: any[]; error?: string }> {
+    try {
+      await this.initialize();
+      
+      const users = await this.client.getProfilesByIds(userIds);
+      
+      return { success: true, users };
+    } catch (error) {
+      console.error('Get users by IDs failed:', error);
+      
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: 'Failed to get users' };
+    }
+  }
+
+  async getUser(userId: string): Promise<{ success: boolean; user?: any; error?: string }> {
+    try {
+      await this.initialize();
+      
+      const user = await this.client.getUser(userId);
+      
+      return { success: true, user };
+    } catch (error) {
+      console.error('Get user failed:', error);
+      
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: 'Failed to get user' };
+    }
+  }
 }
 
 export const mattermostService = new MattermostService();
