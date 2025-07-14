@@ -100,11 +100,13 @@ export class MattermostService {
   async logout(): Promise<void> {
     try {
       await TokenStorage.clearAll();
-      this.client.setToken('');
-      this.client.setUrl('');
     } catch (error) {
       console.error('Failed to logout:', error);
     }
+    
+    // Always clear local tokens even if storage clear fails
+    this.client.setToken('');
+    this.client.setUrl('');
   }
 
   getToken(): string | null {
