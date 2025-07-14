@@ -15,8 +15,10 @@ The app follows a standard Expo Router architecture:
   - `login/`: Authentication flow (server URL, credentials, success screens)
     - `index.tsx`: Redirects to server setup screen
   - `dashboard/`: Tab-based navigation group with index and users screens
+    - `_layout.tsx`: Tab layout with hidden headers to prevent visual gaps
+    - `index.tsx`: Main dashboard with logout button and server status
+    - `users.tsx`: User management screen with search and filtering
   - `_layout.tsx`: Root layout handling fonts, themes, navigation stack, and auth provider
-  - `modal.tsx`: Modal screen accessible from any tab
 - **components/**: Reusable UI components with theming support
   - `Themed.tsx`: Theme-aware Text and View components
   - `useColorScheme.ts`: Color scheme detection (light/dark mode)
@@ -67,11 +69,11 @@ npm test         # Run Jest tests with watch mode
 ## Navigation Structure
 
 The app uses a stack navigator with conditional routing based on authentication:
-- **Root level**: Stack with index route, login flow, dashboard tabs, and modal
+- **Root level**: Stack with index route, login flow, and dashboard tabs
 - **Index route** (`/`): Automatically redirects to `/login` or `/dashboard` based on auth state
 - **Login flow**: `/login` → `/login/server` → `/login/credentials` → `/login/success`
-- **Dashboard tabs**: Two tabs (index and users screens) after authentication
-- **Modal**: Presented modally from any screen
+- **Dashboard tabs**: Two tabs (index and users screens) after authentication with hidden headers
+- **Tab Headers**: Disabled to prevent visual gaps with custom gradient headers
 
 ## Authentication Flow
 
@@ -81,8 +83,9 @@ The app uses a stack navigator with conditional routing based on authentication:
 4. **Credentials Screen** (`/login/credentials`): User enters username/password  
 5. **Success Screen** (`/login/success`): Shows successful connection, tokens are stored securely
 6. **Main App** (`/dashboard`): Tab-based navigation after authentication
+7. **Logout**: Logout button in dashboard redirects user back to login screen automatically
 
-The app automatically handles navigation based on authentication state and persists login sessions across app restarts using secure token storage.
+The app automatically handles navigation based on authentication state and persists login sessions across app restarts using secure token storage. The logout function includes automatic redirection to prevent users from getting stuck on authenticated screens.
 
 ## Mattermost Integration
 
@@ -102,6 +105,14 @@ The app automatically handles navigation based on authentication state and persi
 - **User Details**: Shows user status, roles, and basic profile information
 - **Loading States**: Separate loading indicators for initial load and refresh operations
 - **Error Handling**: Comprehensive error states with user-friendly messages
+
+## UI/UX Features
+
+- **Custom Gradient Headers**: Both dashboard and users screens use custom gradient headers
+- **Hidden Tab Headers**: Tab headers are disabled to prevent visual gaps with custom headers
+- **Logout Button**: Integrated logout button in dashboard header with confirmation dialog
+- **Loading Transitions**: Smooth loading states during authentication changes
+- **Responsive Design**: Proper handling of different screen sizes and orientations
 
 ## Theming
 
@@ -124,6 +135,8 @@ The app supports automatic light/dark mode switching:
 - **Token Validation**: Validates stored tokens and cleans up invalid sessions
 - **Error Handling**: Sensitive information is not logged to console
 - **Session Management**: Automatic logout on token validation failure
+- **Logout Navigation**: Logout function automatically redirects to login screen
+- **Loading States**: Proper loading indicators during authentication transitions
 
 ## Testing
 

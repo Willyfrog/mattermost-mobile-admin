@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
-  const { user, serverUrl, isAuthenticated } = useAuth();
+  const { user, serverUrl, isAuthenticated, logout, loading } = useAuth();
   
   const backgroundColor = useThemeColor({}, 'background');
   const cardColor = useThemeColor({}, 'card');
@@ -20,6 +20,41 @@ export default function DashboardScreen() {
   const successColor = useThemeColor({}, 'success');
   const errorColor = useThemeColor({}, 'error');
   const borderColor = useThemeColor({}, 'border');
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', style: 'destructive', onPress: logout },
+      ]
+    );
+  };
+
+  // Show loading state during auth transitions
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor }]}>
+        <View style={styles.loadingContainer}>
+          <FontAwesome name="spinner" size={32} color={primaryColor} />
+          <Text style={[styles.loadingText, { color: textColor }]}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If not authenticated, show minimal loading (user should be redirected soon)
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor }]}>
+        <View style={styles.loadingContainer}>
+          <FontAwesome name="spinner" size={32} color={primaryColor} />
+          <Text style={[styles.loadingText, { color: textColor }]}>Redirecting...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]}>
@@ -32,6 +67,12 @@ export default function DashboardScreen() {
           end={{ x: 1, y: 1 }}
         >
           <View style={[styles.headerContent, { backgroundColor: 'transparent' }]}>
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <FontAwesome name="sign-out" size={20} color="#fff" />
+            </TouchableOpacity>
             <FontAwesome name="server" size={32} color="#fff" style={styles.headerIcon} />
             <Text style={styles.headerTitle}>Mattermost Admin</Text>
             <Text style={styles.headerSubtitle}>Dashboard</Text>
@@ -94,6 +135,14 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     alignItems: 'center',
+    position: 'relative',
+  },
+  logoutButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    padding: 8,
+    zIndex: 1,
   },
   headerIcon: {
     marginBottom: 8,
@@ -200,6 +249,19 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 15,
     lineHeight: 22,
+    textAlign: 'center',
+  },
+  
+  // Loading Styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
     textAlign: 'center',
   },
 });

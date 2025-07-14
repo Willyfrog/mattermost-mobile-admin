@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { router } from 'expo-router';
 import { mattermostService } from '@/services/mattermostClient';
 import { TokenStorage } from '@/services/tokenStorage';
 
@@ -85,12 +86,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(false);
       setUser(null);
       setServerUrl(null);
+      
+      // Redirect to login screen
+      router.replace('/login');
     } catch (error) {
       console.error('❌ Error during logout:', error);
       // Still update local state even if storage clear fails
       setIsAuthenticated(false);
       setUser(null);
       setServerUrl(null);
+      
+      // Redirect to login screen even if logout fails
+      router.replace('/login');
     }
   };
 
