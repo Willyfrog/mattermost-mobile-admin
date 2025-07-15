@@ -5,11 +5,16 @@ import { FontAwesome } from '@expo/vector-icons';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppData } from '@/contexts/AppDataContext';
+import TeamCard from '@/components/TeamCard';
+import RoleCard from '@/components/RoleCard';
+import { LoadingState } from '@/components/LoadingState';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const { user, serverUrl, isAuthenticated, logout, loading } = useAuth();
+  const { teams, roles, loading: appLoading, error: appError, retryTeams, retryRoles } = useAppData();
   
   const backgroundColor = useThemeColor({}, 'background');
   const cardColor = useThemeColor({}, 'card');
@@ -104,15 +109,88 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          {/* Welcome Section */}
-          <View style={styles.welcomeSection}>
-            <View style={[styles.welcomeCard, { backgroundColor: cardColor, borderColor }]}>
-              <FontAwesome name="info-circle" size={24} color={primaryColor} style={styles.welcomeIcon} />
-              <Text style={[styles.welcomeTitle, { color: textColor }]}>Welcome to Mattermost Admin</Text>
-              <Text style={[styles.welcomeText, { color: textSecondary }]}>
-                Manage your Mattermost server from anywhere. Use the quick actions above or navigate through the tabs to access different features.
-              </Text>
+          {/* Teams Section */}
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, { backgroundColor: 'transparent' }]}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Teams</Text>
+              {teams.length > 5 && (
+                <TouchableOpacity style={styles.viewAllButton}>
+                  <Text style={[styles.viewAllText, { color: primaryColor }]}>View All</Text>
+                </TouchableOpacity>
+              )}
             </View>
+            
+            {appLoading.teams ? (
+              <LoadingState />
+            ) : appError.teams ? (
+              <View style={[styles.errorContainer, { backgroundColor: cardColor, borderColor }]}>
+                <FontAwesome name="exclamation-triangle" size={20} color={errorColor} />
+                <Text style={[styles.errorText, { color: textColor }]}>
+                  {appError.teams}
+                </Text>
+                <TouchableOpacity 
+                  style={[styles.retryButton, { backgroundColor: primaryColor }]}
+                  onPress={retryTeams}
+                >
+                  <Text style={[styles.retryText, { color: '#fff' }]}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : teams.length === 0 ? (
+              <View style={[styles.emptyContainer, { backgroundColor: cardColor, borderColor }]}>
+                <FontAwesome name="users" size={24} color={textMuted} />
+                <Text style={[styles.emptyText, { color: textSecondary }]}>
+                  No teams found
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.cardsContainer}>
+                {teams.slice(0, 5).map((team) => (
+                  <TeamCard key={team.id} team={team} />
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Roles Section */}
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, { backgroundColor: 'transparent' }]}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Roles</Text>
+              {roles.length > 5 && (
+                <TouchableOpacity style={styles.viewAllButton}>
+                  <Text style={[styles.viewAllText, { color: primaryColor }]}>View All</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {appLoading.roles ? (
+              <LoadingState />
+            ) : appError.roles ? (
+              <View style={[styles.errorContainer, { backgroundColor: cardColor, borderColor }]}>
+                <FontAwesome name="exclamation-triangle" size={20} color={errorColor} />
+                <Text style={[styles.errorText, { color: textColor }]}>
+                  {appError.roles}
+                </Text>
+                <TouchableOpacity 
+                  style={[styles.retryButton, { backgroundColor: primaryColor }]}
+                  onPress={retryRoles}
+                >
+                  <Text style={[styles.retryText, { color: '#fff' }]}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : roles.length === 0 ? (
+              <View style={[styles.emptyContainer, { backgroundColor: cardColor, borderColor }]}>
+                <FontAwesome name="shield" size={24} color={textMuted} />
+                <Text style={[styles.emptyText, { color: textSecondary }]}>
+                  No roles found
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.cardsContainer}>
+                {roles.slice(0, 5).map((role) => (
+                  <RoleCard key={role.id} role={role} />
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -222,11 +300,30 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   
-  // Welcome Section
-  welcomeSection: {
-    marginBottom: 40,
+  // Section Styles
+  section: {
+    marginBottom: 32,
   },
-  welcomeCard: {
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  viewAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cardsContainer: {
+    gap: 0,
+  },
+  
+  // Error and Empty States
+  errorContainer: {
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -237,18 +334,37 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  welcomeIcon: {
-    marginBottom: 12,
-  },
-  welcomeTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
+  errorText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
-  welcomeText: {
-    fontSize: 15,
-    lineHeight: 22,
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 12,
     textAlign: 'center',
   },
   

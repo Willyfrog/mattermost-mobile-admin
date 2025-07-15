@@ -9,7 +9,9 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AppDataProvider } from '@/contexts/AppDataContext';
 import { useAuth } from '@/hooks/useAuth';
+import { AuthAppDataIntegration } from '@/components/AuthAppDataIntegration';
 import React from 'react';
 
 export {
@@ -47,9 +49,11 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <AppDataProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </AppDataProvider>
   );
 }
 
@@ -74,6 +78,7 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <AuthAppDataIntegration />
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         {!isAuthenticated ? [

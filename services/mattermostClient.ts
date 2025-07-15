@@ -237,6 +237,63 @@ export class MattermostService {
       return { success: false, error: 'Failed to get user' };
     }
   }
+
+  async getAllTeams(): Promise<{ success: boolean; teams?: any[]; error?: string }> {
+    try {
+      await this.initialize();
+      
+      const teamsResponse = await this.client.getTeams();
+      
+      // Handle both Team[] and TeamsWithCount responses
+      const teams = Array.isArray(teamsResponse) ? teamsResponse : teamsResponse.teams;
+      
+      return { success: true, teams };
+    } catch (error) {
+      console.error('Get teams failed:', error);
+      
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: 'Failed to get teams' };
+    }
+  }
+
+  async getAllRoles(): Promise<{ success: boolean; roles?: any[]; error?: string }> {
+    try {
+      await this.initialize();
+      
+      // Get common system roles by name
+      const systemRoleNames = [
+        'system_admin',
+        'system_user',
+        'team_admin',
+        'team_user',
+        'channel_admin',
+        'channel_user',
+        'system_user_manager',
+        'system_read_only_admin',
+        'system_manager',
+        'team_post_all',
+        'team_post_all_public',
+        'channel_guest',
+        'team_guest',
+        'system_guest',
+      ];
+      
+      const roles = await this.client.getRolesByNames(systemRoleNames);
+      
+      return { success: true, roles };
+    } catch (error) {
+      console.error('Get roles failed:', error);
+      
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: 'Failed to get roles' };
+    }
+  }
 }
 
 export const mattermostService = new MattermostService();

@@ -10,6 +10,8 @@ interface AuthContextType {
   login: (serverUrl: string, username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   loading: boolean;
+  clearAppData: () => void;
+  fetchAppData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,6 +21,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [appDataCallbacks, setAppDataCallbacks] = useState<{
+    clearAll: (() => void) | null;
+    fetchAll: (() => Promise<void>) | null;
+  }>({ clearAll: null, fetchAll: null });
 
   console.log('🔧 AuthProvider render - isAuthenticated:', isAuthenticated, 'loading:', loading);
 
@@ -60,6 +66,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearAppData = () => {
+    if (appDataCallbacks.clearAll) {
+      appDataCallbacks.clearAll();
+    }
+  };
+
+  const fetchAppData = async () => {
+    if (appDataCallbacks.fetchAll) {
+      await appDataCallbacks.fetchAll();
+    }
+  };
+
   const login = async (serverUrl: string, username: string, password: string) => {
     try {
       const result = await mattermostService.login(serverUrl, username, password);
@@ -68,6 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(true);
         setUser(result.user);
         setServerUrl(serverUrl);
+        
+        // Fetch app data after successful login
+        await fetchAppData();
+        
         return { success: true };
       } else {
         return { success: false, error: result.error };
@@ -82,6 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear all authentication data from secure storage and service
       await mattermostService.logout();
       
+      // Clear app data
+      clearAppData();
+      
       // Update local state
       setIsAuthenticated(false);
       setUser(null);
@@ -92,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('❌ Error during logout:', error);
       // Still update local state even if storage clear fails
+      clearAppData();
       setIsAuthenticated(false);
       setUser(null);
       setServerUrl(null);
@@ -110,6 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         loading,
+        clearAppData,
+        fetchAppData,
       }}
     >
       {children}

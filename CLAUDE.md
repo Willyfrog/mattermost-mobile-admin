@@ -16,7 +16,7 @@ The app follows a standard Expo Router architecture:
     - `index.tsx`: Redirects to server setup screen
   - `dashboard/`: Tab-based navigation group with index and users screens
     - `_layout.tsx`: Tab layout with hidden headers to prevent visual gaps
-    - `index.tsx`: Main dashboard with logout button and server status
+    - `index.tsx`: Main dashboard with logout button, server status, teams, and roles sections
     - `users.tsx`: User management screen with search and filtering
   - `user-detail.tsx`: User detail modal screen with comprehensive user information and management actions
   - `_layout.tsx`: Root layout handling fonts, themes, navigation stack, and auth provider
@@ -29,13 +29,18 @@ The app follows a standard Expo Router architecture:
   - `SearchInput.tsx`: Debounced search input component
   - `FilterSwitch.tsx`: Toggle switch for filtering options
   - `LoadingState.tsx`: Loading indicator component
+  - `TeamCard.tsx`: Individual team display component with invitation settings and company info
+  - `RoleCard.tsx`: Individual role display component with permissions and type indicators
+  - `AuthAppDataIntegration.tsx`: Integration component for managing auth and app data lifecycle
 - **services/**: API services and business logic
-  - `mattermostClient.ts`: Mattermost API client wrapper with token persistence and user management
+  - `mattermostClient.ts`: Mattermost API client wrapper with token persistence, user management, teams, and roles
   - `tokenStorage.ts`: Secure token storage service using expo-secure-store
 - **contexts/**: React contexts for global state
   - `AuthContext.tsx`: Authentication state management
+  - `AppDataContext.tsx`: Teams and roles data management with loading states and error handling
 - **hooks/**: Custom React hooks
   - `useAuth.ts`: Authentication hook
+  - `useAppData.ts`: Teams and roles data hook (exported from AppDataContext)
 - **utils/**: Utility functions
   - `validation.ts`: Input validation functions
 - **constants/**: Static configuration (Colors.ts for theme colors)
@@ -50,6 +55,7 @@ The app follows a standard Expo Router architecture:
 - **Theme System**: Light/dark mode support with automatic detection
 - **Mattermost Client**: `@mattermost/client` for API communication
 - **Authentication**: Context-based auth state management with persistent token storage
+- **App Data Management**: Global state management for teams and roles with automatic lifecycle handling
 - **Secure Storage**: `expo-secure-store` for encrypted token persistence
 
 ## Development Commands
@@ -80,14 +86,14 @@ The app uses a stack navigator with conditional routing based on authentication:
 ## Authentication Flow
 
 1. **App Start** (`/`): Root index checks stored authentication tokens and redirects appropriately
-2. **Login Start** (`/login`): Redirects to server setup screen (if not authenticated)
+2. **Login Start** (`/login`): Clears app data and redirects to server setup screen (if not authenticated)
 3. **Server URL Screen** (`/login/server`): User enters Mattermost server URL
 4. **Credentials Screen** (`/login/credentials`): User enters username/password  
 5. **Success Screen** (`/login/success`): Shows successful connection, tokens are stored securely
-6. **Main App** (`/dashboard`): Tab-based navigation after authentication
-7. **Logout**: Logout button in dashboard redirects user back to login screen automatically
+6. **Main App** (`/dashboard`): Tab-based navigation after authentication with automatic teams/roles data fetching
+7. **Logout**: Logout button in dashboard clears app data and redirects user back to login screen automatically
 
-The app automatically handles navigation based on authentication state and persists login sessions across app restarts using secure token storage. The logout function includes automatic redirection to prevent users from getting stuck on authenticated screens.
+The app automatically handles navigation based on authentication state and persists login sessions across app restarts using secure token storage. The logout function includes automatic redirection to prevent users from getting stuck on authenticated screens. App data (teams and roles) is automatically fetched after authentication and cleared during logout or when entering the login flow.
 
 ## User Detail Screen
 
@@ -132,6 +138,27 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - Stores authentication state in React Context with persistent token storage
 - Automatically restores authentication on app start from secure storage
 - Validates stored tokens and cleans up invalid sessions
+- Fetches teams and roles data from server with proper error handling and retry mechanisms
+
+## API Methods
+
+### MattermostService Methods
+- `getAllTeams()`: Fetches all teams from server, handles both Team[] and TeamsWithCount responses
+- `getAllRoles()`: Fetches system roles by predefined names (system_admin, team_admin, etc.)
+- `searchUsers()`: Search users with pagination and filtering options
+- `getAllUsers()`: Get all users with pagination
+- `getUser(userId)`: Get specific user details
+- `login()`: Authenticate user and store tokens
+- `logout()`: Clear authentication data and tokens
+- `validateToken()`: Validate stored authentication token
+
+### AppDataContext Methods
+- `fetchTeams()`: Fetch teams data with loading state management
+- `fetchRoles()`: Fetch roles data with loading state management
+- `fetchAllData()`: Fetch both teams and roles data concurrently
+- `clearAllData()`: Clear all teams and roles data from state
+- `retryTeams()`: Retry failed teams data fetch
+- `retryRoles()`: Retry failed roles data fetch
 
 ## User Management Features
 
@@ -144,6 +171,17 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Loading States**: Separate loading indicators for initial load and refresh operations
 - **Error Handling**: Comprehensive error states with user-friendly messages and retry functionality
 
+## Teams and Roles Management
+
+- **Teams Display**: Shows all teams from server with display name, handle, description, and company info
+- **Roles Display**: Shows system roles with type indicators (built-in, scheme, custom) and permissions count
+- **Data Fetching**: Automatically fetches teams and roles data after authentication
+- **Data Lifecycle**: Clears teams/roles data on logout and login flow entry to prevent conflicts
+- **Loading States**: Individual loading indicators for teams and roles sections
+- **Error Handling**: Separate error states with retry functionality for teams and roles
+- **5-Item Limit**: Dashboard shows first 5 teams and roles with "View All" links for future expansion
+- **Card Design**: Consistent styling with server status card using theme colors and shadows
+
 ## UI/UX Features
 
 - **Custom Gradient Headers**: Dashboard, users, and user detail screens use custom gradient headers
@@ -153,6 +191,9 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Loading Transitions**: Smooth loading states during authentication changes
 - **Responsive Design**: Proper handling of different screen sizes and orientations
 - **Action Buttons**: Grid layout with color-coded action buttons for user management
+- **Card Layout**: Teams and roles cards with consistent theming, shadows, and interactive elements
+- **Empty States**: Proper empty state handling for teams and roles sections
+- **View All Links**: Placeholder links for future expansion to dedicated teams/roles screens
 
 ## Theming
 
@@ -177,6 +218,7 @@ The app supports automatic light/dark mode switching:
 - **Session Management**: Automatic logout on token validation failure
 - **Logout Navigation**: Logout function automatically redirects to login screen
 - **Loading States**: Proper loading indicators during authentication transitions
+- **Data Security**: Teams and roles data is automatically cleared on logout to prevent data leakage between sessions
 
 ## Testing
 
