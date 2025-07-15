@@ -42,7 +42,7 @@ The app follows a standard Expo Router architecture:
   - `useAuth.ts`: Authentication hook
   - `useAppData.ts`: Teams and roles data hook (exported from AppDataContext)
 - **utils/**: Utility functions
-  - `validation.ts`: Input validation functions
+  - `validation.ts`: Input validation functions including admin role validation
 - **constants/**: Static configuration (Colors.ts for theme colors)
 - **assets/**: Static assets (fonts, images)
 
@@ -89,11 +89,18 @@ The app uses a stack navigator with conditional routing based on authentication:
 2. **Login Start** (`/login`): Clears app data and redirects to server setup screen (if not authenticated)
 3. **Server URL Screen** (`/login/server`): User enters Mattermost server URL
 4. **Credentials Screen** (`/login/credentials`): User enters username/password  
-5. **Success Screen** (`/login/success`): Shows successful connection, tokens are stored securely
-6. **Main App** (`/dashboard`): Tab-based navigation after authentication with automatic teams/roles data fetching
-7. **Logout**: Logout button in dashboard clears app data and redirects user back to login screen automatically
+5. **Admin Role Validation**: System checks if user has `system_admin` role - non-admin users are rejected with clear error message
+6. **Success Screen** (`/login/success`): Shows successful connection, tokens are stored securely
+7. **Main App** (`/dashboard`): Tab-based navigation after authentication with automatic teams/roles data fetching
+8. **Logout**: Logout button in dashboard clears app data and redirects user back to login screen automatically
 
 The app automatically handles navigation based on authentication state and persists login sessions across app restarts using secure token storage. The logout function includes automatic redirection to prevent users from getting stuck on authenticated screens. App data (teams and roles) is automatically fetched after authentication and cleared during logout or when entering the login flow.
+
+### **Admin Role Requirement**
+- **Access Control**: Only users with `system_admin` role can access the app
+- **Validation**: Admin role checking happens immediately after successful authentication
+- **Error Message**: Non-admin users see: "Access denied. This app is only available to system administrators."
+- **Security**: Role validation prevents non-admin users from accessing any admin features
 
 ## User Detail Screen
 
@@ -138,6 +145,7 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - Stores authentication state in React Context with persistent token storage
 - Automatically restores authentication on app start from secure storage
 - Validates stored tokens and cleans up invalid sessions
+- Enforces admin role requirements during authentication
 - Fetches teams and roles data from server with proper error handling and retry mechanisms
 
 ## API Methods
@@ -148,7 +156,7 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - `searchUsers()`: Search users with pagination and filtering options
 - `getAllUsers()`: Get all users with pagination
 - `getUser(userId)`: Get specific user details
-- `login()`: Authenticate user and store tokens
+- `login()`: Authenticate user, validate admin role, and store tokens
 - `logout()`: Clear authentication data and tokens
 - `validateToken()`: Validate stored authentication token
 
@@ -214,6 +222,9 @@ The app supports automatic light/dark mode switching:
 - **Token Storage**: Uses `expo-secure-store` for encrypted token persistence
 - **Authentication Tokens**: Securely stored and automatically restored on app start
 - **Token Validation**: Validates stored tokens and cleans up invalid sessions
+- **Admin Role Enforcement**: Only users with `system_admin` role can access the app
+- **Role Validation**: Admin role checking happens during login, before token storage
+- **Access Control**: Non-admin users are blocked at authentication level with clear error messages
 - **Error Handling**: Sensitive information is not logged to console
 - **Session Management**: Automatic logout on token validation failure
 - **Logout Navigation**: Logout function automatically redirects to login screen
@@ -223,6 +234,8 @@ The app supports automatic light/dark mode switching:
 ## Testing
 
 - Jest with `jest-expo` preset
-- Test files in `components/__tests__/` and `services/__tests__/`
+- Test files in `components/__tests__/`, `services/__tests__/`, and `utils/__tests__/`
 - Tests run in watch mode by default
-- Comprehensive test coverage for token storage and authentication
+- Comprehensive test coverage for token storage, authentication, and admin role validation
+- Dedicated tests for `validateSystemAdmin` function with edge cases
+- Updated existing tests to handle admin role checking during login

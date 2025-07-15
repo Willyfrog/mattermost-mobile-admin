@@ -1,5 +1,5 @@
 import { Client4 } from '@mattermost/client';
-import { normalizeServerUrl } from '@/utils/validation';
+import { normalizeServerUrl, validateSystemAdmin } from '@/utils/validation';
 import { TokenStorage } from './tokenStorage';
 
 export class MattermostService {
@@ -60,6 +60,12 @@ export class MattermostService {
       this.client.setUrl(normalizedUrl);
       
       const user = await this.client.login(username, password);
+      
+      // Check if user has system admin role
+      const adminValidation = validateSystemAdmin(user);
+      if (!adminValidation.isValid) {
+        return { success: false, error: adminValidation.error };
+      }
       
       // Save authentication data to secure storage
       const token = this.client.getToken();

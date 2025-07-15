@@ -42,3 +42,23 @@ export const validateCredentials = (username: string, password: string): { isVal
 
   return { isValid: true };
 };
+
+export const validateSystemAdmin = (user: any): { isValid: boolean; error?: string } => {
+  if (!user) {
+    return { isValid: false, error: 'User data is required' };
+  }
+
+  if (!user.roles || typeof user.roles !== 'string') {
+    return { isValid: false, error: 'Access denied. This app is only available to system administrators.' };
+  }
+
+  // Check if user has system_admin role (roles are space-delimited)
+  const userRoles = user.roles.split(' ');
+  const hasSystemAdminRole = userRoles.includes('system_admin');
+
+  if (!hasSystemAdminRole) {
+    return { isValid: false, error: 'Access denied. This app is only available to system administrators.' };
+  }
+
+  return { isValid: true };
+};

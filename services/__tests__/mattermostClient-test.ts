@@ -1,7 +1,7 @@
 import { MattermostService } from '../mattermostClient';
 import { TokenStorage } from '../tokenStorage';
 import { Client4 } from '@mattermost/client';
-import { normalizeServerUrl } from '@/utils/validation';
+import { normalizeServerUrl, validateSystemAdmin } from '@/utils/validation';
 
 // Mock dependencies
 jest.mock('@mattermost/client');
@@ -11,6 +11,7 @@ jest.mock('@/utils/validation');
 const mockClient4 = Client4 as jest.MockedClass<typeof Client4>;
 const mockTokenStorage = TokenStorage as jest.Mocked<typeof TokenStorage>;
 const mockNormalizeServerUrl = normalizeServerUrl as jest.MockedFunction<typeof normalizeServerUrl>;
+const mockValidateSystemAdmin = validateSystemAdmin as jest.MockedFunction<typeof validateSystemAdmin>;
 
 describe('MattermostService', () => {
   let service: MattermostService;
@@ -135,13 +136,14 @@ describe('MattermostService', () => {
       const normalizedUrl = 'https://test.mattermost.com/';
       const username = 'testuser';
       const password = 'testpass';
-      const mockUser = { id: 'user123', username: 'testuser' };
+      const mockUser = { id: 'user123', username: 'testuser', roles: 'system_admin system_user' };
       const mockToken = 'login-token-123';
 
       mockNormalizeServerUrl.mockReturnValue(normalizedUrl);
       mockClientInstance.login.mockResolvedValue(mockUser);
       mockClientInstance.getToken.mockReturnValue(mockToken);
       mockTokenStorage.saveAuthData.mockResolvedValue(undefined);
+      mockValidateSystemAdmin.mockReturnValue({ isValid: true });
 
       const result = await service.login(serverUrl, username, password);
 
@@ -230,17 +232,40 @@ describe('MattermostService', () => {
       const normalizedUrl = 'https://test.mattermost.com/';
       const username = 'testuser';
       const password = 'testpass';
-      const mockUser = { id: 'user123', username: 'testuser' };
+      const mockUser = { id: 'user123', username: 'testuser', roles: 'system_admin system_user' };
       const mockToken = 'login-token-123';
 
       mockNormalizeServerUrl.mockReturnValue(normalizedUrl);
       mockClientInstance.login.mockResolvedValue(mockUser);
       mockClientInstance.getToken.mockReturnValue(mockToken);
       mockTokenStorage.saveAuthData.mockRejectedValue(new Error('Storage error'));
+      mockValidateSystemAdmin.mockReturnValue({ isValid: true });
 
       const result = await service.login(serverUrl, username, password);
 
       expect(result).toEqual({ success: false, error: 'Storage error' });
+    });
+
+    it('should reject login for non-admin users', async () => {
+      const serverUrl = 'https://test.mattermost.com';
+      const normalizedUrl = 'https://test.mattermost.com/';
+      const username = 'testuser';
+      const password = 'testpass';
+      const mockUser = { id: 'user123', username: 'testuser', roles: 'system_user' };
+
+      mockNormalizeServerUrl.mockReturnValue(normalizedUrl);
+      mockClientInstance.login.mockResolvedValue(mockUser);
+      mockValidateSystemAdmin.mockReturnValue({ 
+        isValid: false, 
+        error: 'Access denied. This app is only available to system administrators.' 
+      });
+
+      const result = await service.login(serverUrl, username, password);
+
+      expect(result).toEqual({ 
+        success: false, 
+        error: 'Access denied. This app is only available to system administrators.' 
+      });
     });
   });
 

@@ -7,6 +7,7 @@ jest.mock('@mattermost/client');
 jest.mock('@/services/tokenStorage');
 jest.mock('@/utils/validation', () => ({
   normalizeServerUrl: jest.fn((url) => url),
+  validateSystemAdmin: jest.fn(() => ({ isValid: true })),
 }));
 
 const mockClient4 = Client4 as jest.MockedClass<typeof Client4>;
