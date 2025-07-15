@@ -19,6 +19,7 @@ export default function UserDetailScreen() {
   const [user, setUser] = useState<MattermostUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -61,11 +62,73 @@ export default function UserDetailScreen() {
   };
 
   const handleActionPress = (action: string) => {
+    if (action === 'Activate User' || action === 'Deactivate User') {
+      handleUserActiveToggle(action === 'Activate User');
+    } else {
+      Alert.alert(
+        'Action Not Implemented',
+        `${action} functionality will be implemented in a future update.`,
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleUserActiveToggle = (activate: boolean) => {
+    if (!user) return;
+
+    const actionText = activate ? 'activate' : 'deactivate';
+    const warningText = activate 
+      ? 'This will allow the user to login and access the system again.'
+      : 'This will prevent the user from logging in and accessing the system.';
+
     Alert.alert(
-      'Action Not Implemented',
-      `${action} functionality will be implemented in a future update.`,
-      [{ text: 'OK' }]
+      `${activate ? 'Activate' : 'Deactivate'} User`,
+      `Are you sure you want to ${actionText} ${user.username}?\n\n${warningText}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: activate ? 'Activate' : 'Deactivate', 
+          style: activate ? 'default' : 'destructive',
+          onPress: () => performUserActiveToggle(activate)
+        }
+      ]
     );
+  };
+
+  const performUserActiveToggle = async (activate: boolean) => {
+    if (!user) return;
+
+    const actionText = activate ? 'activate' : 'deactivate';
+    setActionLoading(actionText);
+
+    try {
+      const result = await mattermostService.updateUserActive(user.id, activate);
+      
+      if (result.success) {
+        Alert.alert(
+          'Success',
+          `User ${activate ? 'activated' : 'deactivated'} successfully.`,
+          [{ text: 'OK' }]
+        );
+        
+        // Refresh user data to reflect changes
+        await fetchUserDetails();
+      } else {
+        Alert.alert(
+          'Error',
+          result.error || `Failed to ${actionText} user`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        `An error occurred while trying to ${actionText} the user.`,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   if (!isAuthenticated) {
@@ -284,17 +347,30 @@ export default function UserDetailScreen() {
             <TouchableOpacity 
               style={[
                 styles.actionButton, 
-                isActive ? styles.dangerButton : styles.successButton
+                isActive ? styles.dangerButton : styles.successButton,
+                (actionLoading === 'activate' || actionLoading === 'deactivate') && styles.disabledButton
               ]}
               onPress={() => handleActionPress(isActive ? 'Deactivate User' : 'Activate User')}
+              disabled={actionLoading === 'activate' || actionLoading === 'deactivate'}
             >
-              <FontAwesome 
-                name={isActive ? 'user-times' : 'user-plus'} 
-                size={20} 
-                color="#fff" 
-              />
+              {(actionLoading === 'activate' || actionLoading === 'deactivate') ? (
+                <FontAwesome 
+                  name="spinner" 
+                  size={20} 
+                  color="#fff" 
+                />
+              ) : (
+                <FontAwesome 
+                  name={isActive ? 'user-times' : 'user-plus'} 
+                  size={20} 
+                  color="#fff" 
+                />
+              )}
               <Text style={styles.actionButtonText}>
-                {isActive ? 'Deactivate User' : 'Activate User'}
+                {(actionLoading === 'activate' || actionLoading === 'deactivate') 
+                  ? `${actionLoading === 'activate' ? 'Activating' : 'Deactivating'}...`
+                  : isActive ? 'Deactivate User' : 'Activate User'
+                }
               </Text>
             </TouchableOpacity>
           </View>
@@ -440,6 +516,9 @@ const styles = StyleSheet.create({
   },
   dangerButton: {
     backgroundColor: '#EF4444',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   errorContainer: {
     flex: 1,

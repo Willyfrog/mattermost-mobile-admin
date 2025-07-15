@@ -300,6 +300,33 @@ export class MattermostService {
       return { success: false, error: 'Failed to get roles' };
     }
   }
+
+  async updateUserActive(userId: string, active: boolean): Promise<{ success: boolean; error?: string }> {
+    try {
+      await this.initialize();
+      
+      await this.client.updateUserActive(userId, active);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Update user active status failed:', error);
+      
+      if (error instanceof Error) {
+        // Handle specific error cases
+        if (error.message.includes('not_found')) {
+          return { success: false, error: 'User not found' };
+        }
+        
+        if (error.message.includes('permission')) {
+          return { success: false, error: 'Permission denied. You need admin privileges to manage users.' };
+        }
+        
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: `Failed to ${active ? 'activate' : 'deactivate'} user` };
+    }
+  }
 }
 
 export const mattermostService = new MattermostService();

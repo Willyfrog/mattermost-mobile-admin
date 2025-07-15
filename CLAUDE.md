@@ -122,7 +122,7 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Reset Password**: Red button to reset user password (UI only)
 - **Reset MFA**: Orange button to reset multi-factor authentication (UI only)
 - **Change Roles**: Blue button to modify user roles (UI only)
-- **Activate/Deactivate**: Toggle button (green/red) to activate or deactivate user account (UI only)
+- **Activate/Deactivate**: Toggle button (green/red) to activate or deactivate user account with full functionality
 
 ### **Features**
 - **Dynamic Data**: Fetches user details using `mattermostService.getUser(userId)`
@@ -130,9 +130,11 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Loading States**: Proper loading indicators during API calls
 - **Theme Support**: Full light/dark mode compatibility
 - **Responsive Design**: Adapts to different screen sizes
+- **User Activation/Deactivation**: Full implementation with confirmation dialogs, loading states, and success/error feedback
 
 ### **API Integration**
 - Uses existing `mattermostService.getUser(userId)` method
+- Uses `mattermostService.updateUserActive(userId, active)` for user activation/deactivation
 - Handles network errors gracefully
 - Provides retry functionality for failed requests
 - Validates authentication state before loading
@@ -156,6 +158,7 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - `searchUsers()`: Search users with pagination and filtering options
 - `getAllUsers()`: Get all users with pagination
 - `getUser(userId)`: Get specific user details
+- `updateUserActive(userId, active)`: Activate or deactivate user account with proper error handling
 - `login()`: Authenticate user, validate admin role, and store tokens
 - `logout()`: Clear authentication data and tokens
 - `validateToken()`: Validate stored authentication token
@@ -175,9 +178,37 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Filter Options**: Toggle to include/exclude deleted users in results
 - **Pull-to-Refresh**: Refresh user data with proper error handling for empty search states
 - **User Details**: Comprehensive user detail modal with profile information, roles, and activity
-- **User Actions**: Quick action buttons for password reset, MFA reset, role changes, and user activation/deactivation
+- **User Actions**: Quick action buttons for password reset, MFA reset, role changes, and user activation/deactivation (fully functional)
 - **Loading States**: Separate loading indicators for initial load and refresh operations
 - **Error Handling**: Comprehensive error states with user-friendly messages and retry functionality
+
+## User Activation/Deactivation Feature
+
+The app includes a fully functional user activation/deactivation system accessible from the user detail screen:
+
+### **Functionality**
+- **API Integration**: Uses `mattermostService.updateUserActive(userId, active)` method
+- **Confirmation Dialogs**: Shows confirmation dialog before deactivating users with clear warning text
+- **Loading States**: Displays spinner and "Activating..." or "Deactivating..." text during operations
+- **Success/Error Feedback**: Shows alert dialogs with operation results
+- **Data Refresh**: Automatically refreshes user data after successful operations
+- **Button States**: Dynamically changes button text, color, and icon based on user status
+
+### **User Flow**
+1. **Deactivation**: User taps "Deactivate User" → Confirmation dialog → API call → Success message → Data refresh
+2. **Activation**: User taps "Activate User" → Confirmation dialog → API call → Success message → Data refresh
+3. **Error Handling**: Failed operations show error messages with retry options
+
+### **Security & Validation**
+- **Admin Only**: Only system administrators can activate/deactivate users
+- **Permission Checks**: API calls include proper permission validation
+- **Error Messages**: User-friendly error messages for common scenarios (permissions, network errors)
+
+### **UI/UX Features**
+- **Visual States**: Button changes color (green for activate, red for deactivate) and icon
+- **Disabled State**: Button becomes semi-transparent and disabled during operations
+- **Confirmation**: Destructive styling for deactivation confirmation dialog
+- **Feedback**: Clear success/error messages with appropriate styling
 
 ## Teams and Roles Management
 
