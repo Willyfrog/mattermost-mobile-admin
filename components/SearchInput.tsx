@@ -65,6 +65,7 @@ export function SearchInput({
         value={internalValue}
         onChangeText={setInternalValue}
         autoFocus={autoFocus}
+        autoCorrect={false}
         returnKeyType="search"
         clearButtonMode="never" // We'll handle this ourselves
       />
