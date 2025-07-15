@@ -10,6 +10,25 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(),
 }));
 
+jest.mock('expo-router', () => ({
+  router: {
+    replace: jest.fn(),
+    push: jest.fn(),
+    back: jest.fn(),
+    canGoBack: jest.fn(() => false),
+    isReady: true,
+  },
+  useRouter: () => ({
+    replace: jest.fn(),
+    push: jest.fn(),
+    back: jest.fn(),
+    canGoBack: jest.fn(() => false),
+  }),
+  useLocalSearchParams: () => ({}),
+  useSegments: () => [],
+  usePathname: () => '/',
+}));
+
 // Global test configuration
 global.setImmediate = global.setImmediate || ((fn: any, ...args: any[]) => global.setTimeout(fn, 0, ...args));
 global.clearImmediate = global.clearImmediate || global.clearTimeout;
