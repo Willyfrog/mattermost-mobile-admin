@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/Themed';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +15,7 @@ import { MattermostUser } from '@/components/UserCard';
 
 export default function UsersScreen() {
   const { serverUrl, isAuthenticated } = useAuth();
+  const router = useRouter();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [includeDeleted, setIncludeDeleted] = useState(false);
@@ -104,11 +106,7 @@ export default function UsersScreen() {
   };
 
   const handleUserPress = (user: MattermostUser) => {
-    Alert.alert(
-      user.username,
-      `Email: ${user.email}\nStatus: ${user.delete_at ? 'Inactive' : 'Active'}`,
-      [{ text: 'OK' }]
-    );
+    router.push(`/user-detail?userId=${user.id}`);
   };
 
   const handleClearSearch = () => {
