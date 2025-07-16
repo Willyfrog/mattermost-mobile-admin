@@ -64,6 +64,20 @@ export default function UserDetailScreen() {
   const handleActionPress = (action: string) => {
     if (action === 'Activate User' || action === 'Deactivate User') {
       handleUserActiveToggle(action === 'Activate User');
+    } else if (action === 'Reset MFA') {
+      if (!user?.mfa_active) {
+        Alert.alert(
+          'MFA Not Active',
+          'Multi-Factor Authentication is not enabled for this user.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      Alert.alert(
+        'Action Not Implemented',
+        `${action} functionality will be implemented in a future update.`,
+        [{ text: 'OK' }]
+      );
     } else {
       Alert.alert(
         'Action Not Implemented',
@@ -329,8 +343,13 @@ export default function UserDetailScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.actionButton, styles.warningButton]}
+              style={[
+                styles.actionButton, 
+                styles.warningButton,
+                !user.mfa_active && styles.disabledButton
+              ]}
               onPress={() => handleActionPress('Reset MFA')}
+              disabled={!user.mfa_active}
             >
               <FontAwesome name="shield" size={20} color="#fff" />
               <Text style={styles.actionButtonText}>Reset MFA</Text>
