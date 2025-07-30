@@ -29,6 +29,7 @@ describe('MattermostService', () => {
       ping: jest.fn(),
       login: jest.fn(),
       getMe: jest.fn(),
+      sendPasswordResetEmail: jest.fn(),
     } as any;
     
     mockClient4.mockImplementation(() => mockClientInstance);
@@ -388,6 +389,119 @@ describe('MattermostService', () => {
 
       expect(mockClientInstance.getUrl).toHaveBeenCalledTimes(1);
       expect(result).toBe(mockUrl);
+    });
+  });
+
+  describe('sendPasswordResetEmail', () => {
+    beforeEach(async () => {
+      // Initialize service with mock auth data
+      mockTokenStorage.getAuthData.mockResolvedValue({
+        token: 'valid-token',
+        serverUrl: 'https://test.mattermost.com',
+        userId: 'user123',
+        username: 'testuser',
+      });
+      await service.initialize();
+    });
+
+    it('should send password reset email successfully', async () => {
+      const email = 'user@example.com';
+      mockClientInstance.sendPasswordResetEmail.mockResolvedValue(undefined);
+
+      const result = await service.sendPasswordResetEmail(email);
+
+      expect(mockClientInstance.sendPasswordResetEmail).toHaveBeenCalledWith(email);
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should handle user not found error', async () => {
+      const email = 'nonexistent@example.com';
+      mockClientInstance.sendPasswordResetEmail.mockRejectedValue(new Error('User not found'));
+
+      const result = await service.sendPasswordResetEmail(email);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'User not found',
+      });
+    });
+
+    it('should handle permission denied error', async () => {
+      const email = 'user@example.com';
+      mockClientInstance.sendPasswordResetEmail.mockRejectedValue(new Error('permission denied'));
+
+      const result = await service.sendPasswordResetEmail(email);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Permission denied. You need admin privileges to reset passwords.',
+      });
+    });
+
+    it('should handle SSO user error', async () => {
+      const email = 'sso-user@example.com';
+      mockClientInstance.sendPasswordResetEmail.mockRejectedValue(new Error('sso user detected'));
+
+      const result = await service.sendPasswordResetEmail(email);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Cannot reset password for SSO users',
+      });
+    });
+
+    it('should handle generic API errors', async () => {
+      const email = 'user@example.com';
+      mockClientInstance.sendPasswordResetEmail.mockRejectedValue(new Error('Server internal error'));
+
+      const result = await service.sendPasswordResetEmail(email);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Server internal error',
+      });
+    });
+
+    it('should handle network errors', async () => {
+      const email = 'user@example.com';
+      mockClientInstance.sendPasswordResetEmail.mockRejectedValue(new Error('Network request failed'));
+
+      const result = await service.sendPasswordResetEmail(email);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Network request failed',
+      });
+    });
+
+    it('should handle non-Error exceptions', async () => {
+      const email = 'user@example.com';
+      mockClientInstance.sendPasswordResetEmail.mockRejectedValue('Unexpected error');
+
+      const result = await service.sendPasswordResetEmail(email);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Failed to send password reset email',
+      });
+    });
+
+    it('should initialize service before making API call', async () => {
+      const newService = new MattermostService();
+      const email = 'user@example.com';
+      
+      mockTokenStorage.getAuthData.mockResolvedValue({
+        token: 'init-token',
+        serverUrl: 'https://init.mattermost.com',
+      });
+      mockClientInstance.sendPasswordResetEmail.mockResolvedValue(undefined);
+
+      const result = await newService.sendPasswordResetEmail(email);
+
+      expect(mockTokenStorage.getAuthData).toHaveBeenCalled();
+      expect(mockClientInstance.setUrl).toHaveBeenCalledWith('https://init.mattermost.com');
+      expect(mockClientInstance.setToken).toHaveBeenCalledWith('init-token');
+      expect(result).toEqual({ success: true });
     });
   });
 });

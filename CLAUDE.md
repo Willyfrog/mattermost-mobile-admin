@@ -25,7 +25,7 @@ The app follows a standard Expo Router architecture:
   - `Themed.tsx`: Theme-aware Text and View components
   - `useColorScheme.ts`: Color scheme detection (light/dark mode)
   - `useClientOnlyValue.ts`: Client-side only value hooks for web compatibility
-  - `UserCard.tsx`: Individual user display component with status indicators
+  - `UserCard.tsx`: Individual user display component with status indicators and MattermostUser interface (includes auth_service field for SSO detection)
   - `UserList.tsx`: FlatList component for displaying users with refresh control
   - `SearchInput.tsx`: Debounced search input component
   - `FilterSwitch.tsx`: Toggle switch for filtering options
@@ -120,7 +120,7 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Quick Actions**: Grid of action buttons for user management tasks
 
 ### **Action Buttons**
-- **Reset Password**: Red button to reset user password (UI only)
+- **Reset Password**: Red button to send password reset email to email authentication users (fully functional, disabled for SSO users)
 - **Reset MFA**: Orange button to reset multi-factor authentication (UI only)
 - **Change Roles**: Blue button to modify user roles (UI only)
 - **Activate/Deactivate**: Toggle button (green/red) to activate or deactivate user account with full functionality
@@ -132,10 +132,12 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Theme Support**: Full light/dark mode compatibility
 - **Responsive Design**: Adapts to different screen sizes
 - **User Activation/Deactivation**: Full implementation with confirmation dialogs, loading states, and success/error feedback
+- **Password Reset**: Full implementation for email authentication users with SSO detection and proper error handling
 
 ### **API Integration**
 - Uses existing `mattermostService.getUser(userId)` method
 - Uses `mattermostService.updateUserActive(userId, active)` for user activation/deactivation
+- Uses `mattermostService.sendPasswordResetEmail(email)` for password reset functionality
 - Handles network errors gracefully
 - Provides retry functionality for failed requests
 - Validates authentication state before loading
@@ -160,6 +162,7 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - `getAllUsers()`: Get all users with pagination
 - `getUser(userId)`: Get specific user details
 - `updateUserActive(userId, active)`: Activate or deactivate user account with proper error handling
+- `sendPasswordResetEmail(email)`: Send password reset email to email authentication users with SSO validation
 - `login()`: Authenticate user, validate admin role, and store tokens
 - `logout()`: Clear authentication data and tokens
 - `validateToken()`: Validate stored authentication token
@@ -179,7 +182,7 @@ The user detail screen (`/user-detail`) is a modal screen that provides comprehe
 - **Filter Options**: Toggle to include/exclude deleted users in results
 - **Pull-to-Refresh**: Refresh user data with proper error handling for empty search states
 - **User Details**: Comprehensive user detail modal with profile information, roles, and activity
-- **User Actions**: Quick action buttons for password reset, MFA reset, role changes, and user activation/deactivation (fully functional)
+- **User Actions**: Quick action buttons for password reset (fully functional), MFA reset, role changes, and user activation/deactivation (fully functional)
 - **Loading States**: Separate loading indicators for initial load and refresh operations
 - **Error Handling**: Comprehensive error states with user-friendly messages and retry functionality
 
@@ -210,6 +213,35 @@ The app includes a fully functional user activation/deactivation system accessib
 - **Disabled State**: Button becomes semi-transparent and disabled during operations
 - **Confirmation**: Destructive styling for deactivation confirmation dialog
 - **Feedback**: Clear success/error messages with appropriate styling
+
+## Password Reset Feature
+
+The app includes a fully functional password reset system accessible from the user detail screen:
+
+### **Functionality**
+- **API Integration**: Uses `mattermostService.sendPasswordResetEmail(email)` method
+- **SSO Detection**: Automatically detects SSO users via `auth_service` field and disables functionality
+- **Email Authentication Support**: Only allows password reset for users with email authentication (empty/null `auth_service`)
+- **Confirmation Dialogs**: Shows confirmation dialog before sending reset email with clear explanation
+- **Loading States**: Displays spinner and "Sending..." text during API operations
+- **Success/Error Feedback**: Shows alert dialogs with operation results and user-friendly error messages
+
+### **User Flow**
+1. **Email Auth Users**: User taps "Reset Password" → Confirmation dialog → API call → Success message
+2. **SSO Users**: Button is disabled with reduced opacity → Tapping shows explanation dialog
+3. **Error Handling**: Failed operations show specific error messages (permissions, user not found, etc.)
+
+### **Security & Validation**
+- **Admin Only**: Only system administrators can trigger password resets
+- **Authentication Type Check**: Validates user authentication method before allowing reset
+- **Permission Checks**: API calls include proper permission validation
+- **Error Messages**: User-friendly error messages without exposing sensitive information
+
+### **UI/UX Features**
+- **Visual States**: Button shows loading spinner during operations
+- **Disabled State**: Button becomes semi-transparent for SSO users with tooltip explanation
+- **Confirmation**: Clear dialog explaining what will happen when reset email is sent
+- **Feedback**: Success/error alerts with appropriate styling and messaging
 
 ## Teams and Roles Management
 
@@ -270,8 +302,17 @@ The app supports automatic light/dark mode switching:
 ## Testing
 
 - Jest with `jest-expo` preset
-- Test files in `components/__tests__/`, `services/__tests__/`, and `utils/__tests__/`
+- Test files in `components/__tests__/`, `services/__tests__/`, `utils/__tests__/`, and `app/__tests__/`
 - Tests run in watch mode by default
 - Comprehensive test coverage for token storage, authentication, and admin role validation
 - Dedicated tests for `validateSystemAdmin` function with edge cases
 - Updated existing tests to handle admin role checking during login
+- **Password Reset Testing**: Complete test suite for password reset functionality including:
+  - API method tests in `services/__tests__/mattermostClient-test.ts`
+  - SSO detection logic tests in `utils/__tests__/sso-detection-test.ts`
+  - Business logic tests in `app/__tests__/password-reset-logic-test.ts`
+  - Enhanced test helpers with SSO user factories and password reset scenarios
+  - Edge case testing for various authentication types (SAML, LDAP, OAuth, email)
+
+## Resources
+- For interacting with a Mattermost instance you can check https://developers.mattermost.com/api-documentation/ to figure out possible methods to use.

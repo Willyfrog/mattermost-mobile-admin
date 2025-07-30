@@ -34,6 +34,9 @@ export class TestDataFactory {
       first_name: 'Test',
       last_name: 'User',
       roles: 'system_user',
+      delete_at: 0,
+      auth_service: null, // Email authentication by default
+      mfa_active: false,
       ...overrides,
     };
   }
@@ -49,6 +52,45 @@ export class TestDataFactory {
       first_name: 'Admin',
       last_name: 'User',
       roles: 'system_admin',
+      delete_at: 0,
+      auth_service: null, // Email authentication by default
+      mfa_active: true,
+      ...overrides,
+    };
+  }
+
+  /**
+   * Creates mock SSO user data for testing
+   */
+  static createSSOUser(authService: string = 'saml', overrides: any = {}) {
+    return {
+      id: 'sso123',
+      username: 'ssouser',
+      email: 'sso@example.com',
+      first_name: 'SSO',
+      last_name: 'User',
+      roles: 'system_user',
+      delete_at: 0,
+      auth_service: authService,
+      mfa_active: false,
+      ...overrides,
+    };
+  }
+
+  /**
+   * Creates mock email authentication user data for testing
+   */
+  static createEmailAuthUser(overrides: any = {}) {
+    return {
+      id: 'email123',
+      username: 'emailuser',
+      email: 'email@example.com',
+      first_name: 'Email',
+      last_name: 'User',
+      roles: 'system_user',
+      delete_at: 0,
+      auth_service: null,
+      mfa_active: false,
       ...overrides,
     };
   }
@@ -78,6 +120,8 @@ export class TestDataFactory {
       serverError: new Error('Internal Server Error'),
       unauthorized: new Error('Unauthorized'),
       forbidden: new Error('Forbidden'),
+      ssoUser: new Error('Cannot reset password for SSO user'),
+      permissionDenied: new Error('Permission denied'),
     };
   }
 }
@@ -146,6 +190,7 @@ export class MattermostClientMockHelper {
       ping: jest.fn(),
       login: jest.fn(),
       getMe: jest.fn(),
+      sendPasswordResetEmail: jest.fn(),
     };
   }
 
@@ -174,6 +219,87 @@ export class MattermostClientMockHelper {
     mockClient.login.mockRejectedValue(error);
     mockClient.getMe.mockRejectedValue(error);
     mockClient.ping.mockRejectedValue(error);
+  }
+}
+
+export class PasswordResetTestHelper {
+  /**
+   * Sets up mocks for successful password reset
+   */
+  static setupSuccessfulPasswordReset(mockService: any, email: string) {
+    mockService.sendPasswordResetEmail.mockResolvedValue({ success: true });
+    return { email };
+  }
+
+  /**
+   * Sets up mocks for failed password reset
+   */
+  static setupFailedPasswordReset(mockService: any, errorType: 'not_found' | 'permission' | 'sso' | 'network' = 'not_found') {
+    const errorMap = {
+      not_found: { success: false, error: 'User not found' },
+      permission: { success: false, error: 'Permission denied. You need admin privileges to reset passwords.' },
+      sso: { success: false, error: 'Cannot reset password for SSO users' },
+      network: { success: false, error: 'Network request failed' },
+    };
+
+    mockService.sendPasswordResetEmail.mockResolvedValue(errorMap[errorType]);
+  }
+
+  /**
+   * Sets up mocks for password reset exception
+   */
+  static setupPasswordResetException(mockService: any, error: Error) {
+    mockService.sendPasswordResetEmail.mockRejectedValue(error);
+  }
+
+  /**
+   * Creates test scenarios for password reset functionality
+   */
+  static getPasswordResetScenarios() {
+    return {
+      emailAuthUser: {
+        description: 'Email authentication user (can reset password)',
+        user: TestDataFactory.createEmailAuthUser(),
+        canResetPassword: true,
+      },
+      ssoSamlUser: {
+        description: 'SAML SSO user (cannot reset password)',
+        user: TestDataFactory.createSSOUser('saml'),
+        canResetPassword: false,
+      },
+      ssoLdapUser: {
+        description: 'LDAP SSO user (cannot reset password)',
+        user: TestDataFactory.createSSOUser('ldap'),
+        canResetPassword: false,
+      },
+      ssoGoogleUser: {
+        description: 'Google OAuth user (cannot reset password)',
+        user: TestDataFactory.createSSOUser('google'),
+        canResetPassword: false,
+      },
+      emptyAuthServiceUser: {
+        description: 'User with empty auth_service (can reset password)',
+        user: TestDataFactory.createUser({ auth_service: '' }),
+        canResetPassword: true,
+      },
+      whitespaceAuthServiceUser: {
+        description: 'User with whitespace-only auth_service (can reset password)',
+        user: TestDataFactory.createUser({ auth_service: '   ' }),
+        canResetPassword: true,
+      },
+      undefinedAuthServiceUser: {
+        description: 'User with undefined auth_service (can reset password)',
+        user: TestDataFactory.createUser({ auth_service: undefined }),
+        canResetPassword: true,
+      },
+    };
+  }
+
+  /**
+   * Helper to check if a user can reset password based on auth_service
+   */
+  static canUserResetPassword(user: any): boolean {
+    return !user.auth_service || user.auth_service.trim() === '';
   }
 }
 

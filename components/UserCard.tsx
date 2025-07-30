@@ -16,6 +16,7 @@ export interface MattermostUser {
   position?: string;
   last_activity_at?: number;
   mfa_active?: boolean;
+  auth_service?: string;
 }
 
 interface UserCardProps {

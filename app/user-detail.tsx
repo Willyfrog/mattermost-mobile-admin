@@ -64,6 +64,8 @@ export default function UserDetailScreen() {
   const handleActionPress = (action: string) => {
     if (action === 'Activate User' || action === 'Deactivate User') {
       handleUserActiveToggle(action === 'Activate User');
+    } else if (action === 'Reset Password') {
+      handlePasswordReset();
     } else if (action === 'Reset MFA') {
       if (!user?.mfa_active) {
         Alert.alert(
@@ -138,6 +140,65 @@ export default function UserDetailScreen() {
       Alert.alert(
         'Error',
         `An error occurred while trying to ${actionText} the user.`,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handlePasswordReset = () => {
+    if (!user) return;
+
+    // Check if user is using SSO
+    if (user.auth_service && user.auth_service.trim() !== '') {
+      Alert.alert(
+        'Cannot Reset Password',
+        'This user uses SSO authentication. Password reset is only available for email authentication users.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Reset Password',
+      `Are you sure you want to send a password reset email to ${user.email}?\n\nThe user will receive an email with instructions to reset their password.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Send Reset Email', 
+          style: 'default',
+          onPress: () => performPasswordReset()
+        }
+      ]
+    );
+  };
+
+  const performPasswordReset = async () => {
+    if (!user) return;
+
+    setActionLoading('reset-password');
+
+    try {
+      const result = await mattermostService.sendPasswordResetEmail(user.email);
+      
+      if (result.success) {
+        Alert.alert(
+          'Success',
+          `Password reset email sent to ${user.email} successfully.`,
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          result.error || 'Failed to send password reset email',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'An error occurred while trying to send the password reset email.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -335,11 +396,29 @@ export default function UserDetailScreen() {
           
           <View style={styles.actionGrid}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.dangerButton]}
+              style={[
+                styles.actionButton, 
+                styles.dangerButton,
+                ((user.auth_service && user.auth_service.trim() !== '') || actionLoading === 'reset-password') && styles.disabledButton
+              ]}
               onPress={() => handleActionPress('Reset Password')}
+              disabled={(user.auth_service && user.auth_service.trim() !== '') || actionLoading === 'reset-password'}
             >
-              <FontAwesome name="lock" size={20} color="#fff" />
-              <Text style={styles.actionButtonText}>Reset Password</Text>
+              {actionLoading === 'reset-password' ? (
+                <FontAwesome 
+                  name="spinner" 
+                  size={20} 
+                  color="#fff" 
+                />
+              ) : (
+                <FontAwesome name="lock" size={20} color="#fff" />
+              )}
+              <Text style={styles.actionButtonText}>
+                {actionLoading === 'reset-password' 
+                  ? 'Sending...'
+                  : 'Reset Password'
+                }
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity 

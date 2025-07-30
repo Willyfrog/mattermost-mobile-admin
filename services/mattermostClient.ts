@@ -327,6 +327,37 @@ export class MattermostService {
       return { success: false, error: `Failed to ${active ? 'activate' : 'deactivate'} user` };
     }
   }
+
+  async sendPasswordResetEmail(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await this.initialize();
+      
+      await this.client.sendPasswordResetEmail(email);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Send password reset email failed:', error);
+      
+      if (error instanceof Error) {
+        // Handle specific error cases
+        if (error.message.includes('not_found')) {
+          return { success: false, error: 'User not found' };
+        }
+        
+        if (error.message.includes('permission')) {
+          return { success: false, error: 'Permission denied. You need admin privileges to reset passwords.' };
+        }
+        
+        if (error.message.includes('sso')) {
+          return { success: false, error: 'Cannot reset password for SSO users' };
+        }
+        
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: 'Failed to send password reset email' };
+    }
+  }
 }
 
 export const mattermostService = new MattermostService();
