@@ -14,10 +14,11 @@ The app follows a standard Expo Router architecture:
   - `index.tsx`: Root route handler that redirects based on authentication state
   - `login/`: Authentication flow (server URL, credentials, success screens)
     - `index.tsx`: Redirects to server setup screen
-  - `dashboard/`: Tab-based navigation group with index and users screens
+  - `dashboard/`: Tab-based navigation group with index, users, and teams screens
     - `_layout.tsx`: Tab layout with hidden headers to prevent visual gaps
     - `index.tsx`: Main dashboard with logout button, server status, teams, and roles sections
     - `users.tsx`: User management screen with search and filtering
+    - `teams.tsx`: Team management screen with alphabetically sorted team list
   - `user-detail.tsx`: User detail modal screen with comprehensive user information and management actions
   - `_layout.tsx`: Root layout handling fonts, themes, navigation stack, and auth provider
 - **components/**: Reusable UI components with theming support
@@ -79,7 +80,7 @@ The app uses a stack navigator with conditional routing based on authentication:
 - **Root level**: Stack with index route, login flow, dashboard tabs, and user detail modal
 - **Index route** (`/`): Automatically redirects to `/login` or `/dashboard` based on auth state
 - **Login flow**: `/login` → `/login/server` → `/login/credentials` → `/login/success`
-- **Dashboard tabs**: Two tabs (index and users screens) after authentication with hidden headers
+- **Dashboard tabs**: Three tabs (index, users, and teams screens) after authentication with hidden headers
 - **User Detail Modal** (`/user-detail`): Modal screen accessible from user list with userId parameter
 - **Tab Headers**: Disabled to prevent visual gaps with custom gradient headers
 
@@ -213,17 +214,21 @@ The app includes a fully functional user activation/deactivation system accessib
 ## Teams and Roles Management
 
 - **Teams Display**: Shows all teams from server with display name, handle, description, and company info
+- **Teams Screen**: Dedicated teams tab displays all teams in alphabetical order by display name
 - **Roles Display**: Shows system roles with type indicators (built-in, scheme, custom) and permissions count
 - **Data Fetching**: Automatically fetches teams and roles data after authentication
 - **Data Lifecycle**: Clears teams/roles data on logout and login flow entry to prevent conflicts
 - **Loading States**: Individual loading indicators for teams and roles sections
 - **Error Handling**: Separate error states with retry functionality for teams and roles
-- **5-Item Limit**: Dashboard shows first 5 teams and roles with "View All" links for future expansion
+- **5-Item Limit**: Dashboard shows first 5 teams and roles with "View All" links
+- **Navigation Integration**: "View All" button in Teams section navigates to the dedicated Teams tab
 - **Card Design**: Consistent styling with server status card using theme colors and shadows
+- **Alphabetical Sorting**: Teams screen sorts teams alphabetically by display name for easy navigation
+- **Pull-to-Refresh**: Teams screen includes pull-to-refresh functionality for data updates
 
 ## UI/UX Features
 
-- **Custom Gradient Headers**: Dashboard, users, and user detail screens use custom gradient headers
+- **Custom Gradient Headers**: Dashboard, users, teams, and user detail screens use custom gradient headers
 - **Hidden Tab Headers**: Tab headers are disabled to prevent visual gaps with custom headers
 - **Modal Presentation**: User detail screen opens as a modal with smooth animation
 - **Logout Button**: Integrated logout button in dashboard header with confirmation dialog
@@ -232,7 +237,7 @@ The app includes a fully functional user activation/deactivation system accessib
 - **Action Buttons**: Grid layout with color-coded action buttons for user management
 - **Card Layout**: Teams and roles cards with consistent theming, shadows, and interactive elements
 - **Empty States**: Proper empty state handling for teams and roles sections
-- **View All Links**: Placeholder links for future expansion to dedicated teams/roles screens
+- **View All Links**: Teams "View All" button navigates to Teams tab; roles link remains as placeholder for future expansion
 
 ## Theming
 

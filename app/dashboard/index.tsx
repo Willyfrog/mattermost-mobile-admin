@@ -2,6 +2,7 @@ import { StyleSheet, ScrollView, Dimensions, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +16,7 @@ const { width } = Dimensions.get('window');
 export default function DashboardScreen() {
   const { user, serverUrl, isAuthenticated, logout, loading } = useAuth();
   const { teams, roles, loading: appLoading, error: appError, retryTeams, retryRoles } = useAppData();
+  const router = useRouter();
   
   const backgroundColor = useThemeColor({}, 'background');
   const cardColor = useThemeColor({}, 'card');
@@ -114,7 +116,10 @@ export default function DashboardScreen() {
             <View style={[styles.sectionHeader, { backgroundColor: 'transparent' }]}>
               <Text style={[styles.sectionTitle, { color: textColor }]}>Teams</Text>
               {teams.length > 5 && (
-                <TouchableOpacity style={styles.viewAllButton}>
+                <TouchableOpacity 
+                  style={styles.viewAllButton}
+                  onPress={() => router.push('/dashboard/teams')}
+                >
                   <Text style={[styles.viewAllText, { color: primaryColor }]}>View All</Text>
                 </TouchableOpacity>
               )}
